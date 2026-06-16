@@ -1,0 +1,70 @@
+SELECT, INSERT, UPDATE, DELETE (CRUD)
+Learning Objectives
+
+By the end of this lesson, you will be able to:
+
+    Write SELECT statements to retrieve data from a database table
+    Use INSERT to add new rows to a table
+    Use UPDATE to modify existing rows
+    Use DELETE to remove rows
+    Understand the CRUD pattern and how it maps to SQL commands
+
+Every application you interact with - whether it's Instagram, your bank's website, or a todo list app - does the same four things with data, over and over. It creates new records, reads existing records, updates records, and deletes records.
+
+These four operations have an acronym: CRUD - Create, Read, Update, Delete. Each maps directly to a SQL command:
+
+Operation
+	
+
+SQL Command
+	
+
+What It Does
+C(reate)
+	INSERT	
+        Adds new rows to a table
+R(ead)
+	SELECT	
+        Retrieves rows from a table
+U(pdate)
+	UPDATE	
+        Modifies existing rows
+D(elete)
+	DELETE	
+        Removes rows from a table
+
+SELECT - Reading Data
+-----------------------------
+SELECT is the most common SQL command. The basic structure is:
+    SELECT columns FROM table_name;
+
+SELECT * means "give me all columns." In production code, name the specific columns you want.
+    SELECT * FROM customers;
+    SELECT name, email FROM customers;
+
+INSERT - Creating Data
+-----------------------------
+INSERT adds new rows:
+    INSERT INTO customers (name, email) VALUES ('New Person', 'new@email.com');
+
+UPDATE - Modifying Data
+-----------------------------
+UPDATE changes existing rows. The WHERE clause is critical:
+    UPDATE customers SET email = 'updated@email.com' WHERE id = 3;
+
+*Dangerous mistake: Forgetting the WHERE clause updates every row:
+-- THIS CHANGES EVERY CUSTOMER'S EMAIL
+    UPDATE customers SET email = 'oops@email.com';
+
+DELETE - Removing Data
+-----------------------------
+DELETE removes rows. Same WHERE rule applies:
+    DELETE FROM customers WHERE id = 3;
+
+Without WHERE, it deletes every row in the table.
+
+
+A Note on SQL Syntax
+
+SQL is not case-sensitive for keywords. By convention, most developers write SQL keywords in UPPERCASE and table/column names in lowercase:
+    SELECT name, email FROM customers WHERE id = 1;
