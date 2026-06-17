@@ -1,0 +1,129 @@
+Learning Objectives
+
+By the end of this lesson, you will be able to:
+
+    Filter query results using WHERE with comparison and logical operators
+    Sort results using ORDER BY
+    Limit result sets with LIMIT
+    Combine multiple conditions using AND, OR, and NOT
+    Use LIKE for pattern matching and IN for set membership
+
+Think about how you use a search engine. You don't just type "websites" and scroll through billions of results. You type something specific — "best pizza near me open now" — and the search engine filters the world's information down to exactly what you need.
+
+SQL works the same way. A SELECT * FROM customers query is like typing "websites" — it gives you everything, and that's rarely what you want. The real power of SQL is in asking precise questions: "Show me all customers in New York," "Show me the top 10 most expensive products," "Show me orders placed in the last 30 days that haven't been shipped yet."
+
+This lesson is about the SQL tools that let you ask those precise questions: WHERE, ORDER BY, LIMIT, and the operators that give them their precision.
+====================================
+WHERE — The Filter
+------------------------------------
+WHERE is the most important clause after SELECT. It filters rows based on a condition — only rows where the condition is true appear in the results.
+    SELECT * FROM books WHERE price > 15.00;
+
+This doesn't change the data in the table. It just controls which rows you see. Think of WHERE as a bouncer at a club — only rows that meet the criteria get through.
+
+Comparison Operators
+------------------------------------
+SQL gives you the standard comparison operators you already know from Python:
+
+Operator
+	1. =
+    2. !=  or  <>
+    3. >
+    4. <
+    5. >=
+    6. <=
+Meaning
+	1. Equal to
+    2. Not equal to
+    3. Greater than
+    4. Less than
+    5. Greater than or equal
+    6. Less than or equal
+Example
+    1. WHERE genre = 'Fiction'
+    2. WHERE status != 'shipped'
+    3. WHERE price > 20.00
+    4. WHERE year < 2000
+    5. WHERE rating >= 4.0
+    6. WHERE quatity <= 5
+
+Note that SQL uses = for equality (not == like Python). Also, <> is the traditional SQL "not equal" operator, though != works in most databases.
+
+Logical Operators — Combining Conditions
+------------------------------------
+AND — Both conditions must be true:
+    SELECT * FROM books WHERE price > 10.00 AND in_stock = 1;
+
+OR — At least one condition must be true:
+    SELECT * FROM books WHERE author = 'Frank Herbert' OR author = 'Isaac Asimov';
+
+NOT — Reverses a condition:
+    SELECT * FROM books WHERE NOT in_stock = 0;
+
+You can combine these, and you should use parentheses to make the logic clear:
+    SELECT * FROM books 
+    WHERE (price < 15.00 OR price > 20.00) 
+    AND in_stock = 1;
+
+This reads: "Books that are either cheap (under $15) or expensive (over $20), but only if they're in stock."
+
+Special Operators
+------------------------------------
+LIKE — Pattern matching for text. Uses % as a wildcard (matches any number of characters) and _ as a single-character wildcard:
+-- Books whose title starts with "The"
+    SELECT * FROM books WHERE title LIKE 'The%';
+
+-- Books whose author contains "Le"
+    SELECT * FROM books WHERE author LIKE '%Le%';
+
+-- Books with exactly 4-letter titles
+    SELECT * FROM books WHERE title LIKE '____';
+
+IN — Checks if a value matches any item in a list. Much cleaner than chaining OR statements:
+-- Instead of this:
+    SELECT * FROM books WHERE author = 'Frank Herbert' OR author = 'Isaac Asimov' OR author = 'Octavia Butler';
+
+-- You can write this:
+    SELECT * FROM books WHERE author IN ('Frank Herbert', 'Isaac Asimov', 'Octavia Butler');
+
+BETWEEN — Checks if a value falls within a range (inclusive):
+    SELECT * FROM books WHERE price BETWEEN 12.00 AND 16.00;
+
+IS NULL / IS NOT NULL — Checks for missing values. In SQL, NULL means "no value" — it's not the same as zero or an empty string. You can't use = NULL; you must use IS NULL:
+    SELECT * FROM customers WHERE email IS NOT NULL;
+
+ORDER BY — Sorting Results
+
+ORDER BY sorts your results by one or more columns:
+-- Alphabetical by title (default is ascending)
+    SELECT * FROM books ORDER BY title;
+
+-- Most expensive first (DESC = descending)
+    SELECT * FROM books ORDER BY price DESC;
+
+-- Sort by author, then by price within each author
+    SELECT * FROM books ORDER BY author, price DESC;
+
+LIMIT — Controlling Result Size
+
+LIMIT caps how many rows are returned. Essential when working with large tables:
+-- Just the first 5 results
+    SELECT * FROM books ORDER BY price DESC LIMIT 5;
+
+-- Skip the first 3 and return the next 5 (pagination)
+    SELECT * FROM books ORDER BY title LIMIT 5 OFFSET 3;
+
+Putting It All Together
+------------------------------------
+A real-world query combines several of these tools:
+SELECT title, author, price 
+FROM books 
+WHERE price < 20.00 
+  AND in_stock = 1 
+  AND author LIKE '%er%'
+ORDER BY price DESC 
+LIMIT 10;
+
+This reads as: "Give me the title, author, and price of in-stock books under $20 whose author's name contains 'er', sorted by price (most expensive first), and only show the top 10."
+
+The order of clauses matters: SELECT → FROM → WHERE → ORDER BY → LIMIT. This is the standard SQL query structure, and you'll internalize it quickly.
