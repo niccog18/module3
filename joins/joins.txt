@@ -1,0 +1,109 @@
+Learning Objectives
+
+By the end of this lesson, you will be able to:
+
+    Use aggregate functions (COUNT, SUM, AVG, MIN, MAX) to summarize data
+    Group results with GROUP BY and filter groups with HAVING
+    Write subqueries to build multi-step queries
+    Know when to use a subquery vs. a join
+
+So far, every query we've written returns individual rows — a list of products, a list of students and their courses. But often, you don't want the raw data. You want a summary. How many orders did we get last month? What's the average salary per department? Who has the highest GPA?
+
+This is what aggregate functions do. Instead of returning one row per record, they crunch multiple rows down into a single value: a count, a sum, an average, a minimum, a maximum.
+
+
+The Big Five Aggregate Functions
+--------------------------------
+COUNT() — Counts how many rows match. The most-used aggregate function.
+-- How many customers do we have?
+    SELECT COUNT(*) FROM customers;
+
+-- How many customers have email addresses?
+    SELECT COUNT(email) FROM customers;  -- Ignores NULLs
+
+COUNT(*) counts all rows. COUNT(column) counts only rows where that column is not NULL.
+
+SUM() — Adds up numeric values.
+-- Total revenue from all orders
+    SELECT SUM(total) FROM orders;
+
+AVG() — Calculates the average of numeric values.
+-- Average product price
+    SELECT AVG(price) FROM products;
+
+MIN() and MAX() — Find the smallest and largest values.
+-- Cheapest and most expensive product
+    SELECT MIN(price), MAX(price) FROM products;
+
+These functions collapse many rows into one answer. SELECT AVG(price) FROM products doesn't give you a list of prices — it gives you a single number.
+
+
+GROUP BY — Aggregating Per Category
+--------------------------------
+Aggregate functions get really powerful when combined with GROUP BY. Instead of one summary for the whole table, you get one summary per group.
+-- Average salary per department
+    SELECT department, AVG(salary) 
+    FROM employees 
+    GROUP BY department;
+
+This splits employees into groups by department, then calculates the average salary within each group. You get one row per department, not one row per employee.
+
+The rule: every column in SELECT must either be in GROUP BY or wrapped in an aggregate function. This makes sense if you think about it — if you're grouping by department and showing one row per department, which specific employee name would you show? There's no single answer, so you can only show things that are the same for the whole group (the department name) or computed from the group (the average salary).
+
+
+HAVING — Filtering Groups
+--------------------------------
+WHERE filters individual rows before grouping. HAVING filters groups after grouping.
+-- Departments where the average salary is above 60,000
+    SELECT department, AVG(salary) as avg_salary
+    FROM employees 
+    GROUP BY department
+    HAVING AVG(salary) > 60000;
+
+A common question: "Why can't I just use WHERE?" Because WHERE runs before GROUP BY exists. It doesn't know about averages or counts yet — those haven't been calculated.
+
+The execution order in a SQL query is:
+
+    FROM — pick the table
+    WHERE — filter individual rows
+    GROUP BY — organize into groups
+    HAVING — filter groups
+    SELECT — choose columns and compute aggregates
+    ORDER BY — sort
+    LIMIT — cap the results
+
+Understanding this order helps you know which clause to use where.
+
+
+Subqueries — Queries Inside Queries
+--------------------------------
+A subquery is a SELECT statement nested inside another query. It runs first, and its result is used by the outer query.
+
+The simplest use case: "Find employees who earn more than the average salary."
+
+You can't write WHERE salary > AVG(salary) — that's not valid SQL because WHERE can't use aggregate functions. But you can use a subquery:
+    SELECT name, salary FROM employees
+    WHERE salary > (SELECT AVG(salary) FROM employees);
+
+The inner query (SELECT AVG(salary) FROM employees) runs first and returns a single number. The outer query then uses that number in its WHERE clause. It's like calculating the answer to a smaller question first, then plugging it into the bigger question.
+
+Subqueries can also return multiple values:
+-- Find customers who have placed at least one order
+    SELECT name FROM customers
+    WHERE id IN (SELECT DISTINCT customer_id FROM orders);
+
+The inner query returns a list of customer IDs that appear in the orders table. The outer query uses IN to filter customers to just those IDs.
+
+
+Subquery vs. Join?
+--------------------------------
+Often you can write the same logic as either a subquery or a join. "Customers who have orders" could be:
+-- Subquery approach
+    SELECT name FROM customers
+    WHERE id IN (SELECT customer_id FROM orders);
+
+-- Join approach
+    SELECT DISTINCT c.name FROM customers c
+    INNER JOIN orders o ON c.id = o.customer_id;
+
+Both return the same result. Joins are generally preferred for performance and readability when you're combining data from multiple tables. Subqueries shine when you need to use an aggregate result as a filter, or when the logic is clearer as a nested question.
