@@ -1,0 +1,99 @@
+Learning Objectives
+----------------------------------
+By the end of this lesson, you will be able to:
+
+    Explain what an ORM is and why developers use one instead of writing raw SQL
+    Set up SQLAlchemy 2.0 with an engine and session
+    Define database models as Python classes using SQLAlchemy's declarative syntax
+    Create tables from model definitions
+
+You've spent the first half of this module writing SQL directly — creating tables, inserting rows, filtering with WHERE, joining tables. That's a valuable skill, and you'll use it throughout your career for debugging, data exploration, and understanding what's happening under the hood.
+
+But here's the reality of professional software development: most of the time, you won't write raw SQL strings in your application code. Instead, you'll use an ORM — an Object-Relational Mapper.
+
+Think of it this way. Right now, when you want to create a customer, you write:
+cursor.execute("INSERT INTO customers (name, email) VALUES (?, ?)", ("Maria", "maria@email.com"))
+
+That works. But it's a string — your editor can't check it for errors, you have to remember SQL syntax, and there's no connection between your Python code and your database structure. If you rename a column in the database, nothing in Python warns you that your queries are broken until they crash at runtime.
+
+With an ORM, the same operation looks like this:
+new_customer = Customer(name="Maria", email="maria@email.com")
+session.add(new_customer)
+session.commit()
+
+That's just Python. The Customer class is the table definition. Creating a row means creating a Python object. Saving it means adding it to a session and committing. If you misspell name as nme, your editor catches it immediately.
+
+An ORM maps Python classes to database tables, and Python objects to database rows. It translates your Python operations into SQL behind the scenes. You think in objects; the database thinks in tables; the ORM bridges the gap.
+
+
+Why SQLAlchemy?
+----------------------------------
+SQLAlchemy is the most widely used ORM in the Python ecosystem. It's used by companies from startups to enterprises, it's the ORM that FastAPI projects typically pair with, and it gives you a choice: you can work purely in Python (the ORM layer) or drop down to raw SQL whenever you need fine-grained control. That flexibility is why it's the industry standard.
+
+We'll be using SQLAlchemy 2.0, which introduced a cleaner, more Pythonic syntax using type annotations. If you see older tutorials online using Column(Integer) instead of Mapped[int], that's the 1.x style — it still works, but the 2.0 style is what new projects should use.
+
+The Three Pieces
+----------------------------------
+Every SQLAlchemy application has three core pieces:
+
+1. The Engine — The connection to your database. It knows where the database is, what type it is (SQLite, PostgreSQL, etc.), and manages the connection pool.
+from sqlalchemy import create_engine
+engine = create_engine("sqlite:///myapp.db")
+
+2. The Models — Python classes that define your table structure. Each class = one table. Each attribute = one column.
+class Customer(Base):
+    __tablename__ = "customers"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column()
+    email: Mapped[str] = mapped_column(unique=True)
+
+3. The Session — Your workspace for making changes. You add objects to the session, modify them, delete them — and nothing actually hits the database until you commit(). Think of it like a shopping cart: you add items, review them, and only "purchase" (commit) when you're ready.
+session = Session()
+session.add(new_customer)
+session.commit()
+
+The DeclarativeBase
+----------------------------------
+Before you can define models, you need a base class that all your models inherit from. In SQLAlchemy 2.0, you create this by subclassing DeclarativeBase:
+from sqlalchemy.orm import DeclarativeBase
+
+class Base(DeclarativeBase):
+    pass
+
+This looks like it does nothing, but it's essential — it connects your Python classes to SQLAlchemy's machinery. Every model you define will inherit from Base, and SQLAlchemy uses that inheritance to know "this class represents a database table."
+
+Column Types
+----------------------------------
+SQLAlchemy maps Python types to SQL types automatically:
+
+Python Type
+	1. int
+    2. str
+    3. float
+    4. bool
+    5. datetime
+SQL Type
+	1. INTEGER
+    2. VARCHAR/TEXT
+    3. FLOAT
+    4. BOOLEAN
+    5. DATETIME
+Example
+    1. IDs, counts, quantities
+    2. Names, emails, descriptions
+    3. Ratings, percentages
+    4. Active/inactive flags
+    5. Timestamps
+
+You express these using Mapped[type] annotations:
+id: Mapped[int] = mapped_column(primary_key=True)
+name: Mapped[str] = mapped_column(nullable=False)
+price: Mapped[float] = mapped_column()
+is_active: Mapped[bool] = mapped_column(default=True)
+
+The mapped_column() call is where you add constraints: primary_key, nullable, unique, default, etc.
+
+For optional columns (columns that can be NULL), use Optional from Python's typing module:
+from typing import Optional
+
+bio: Mapped[Optional[str]] = mapped_column()  # Can be NULL
