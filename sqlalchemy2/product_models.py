@@ -4,6 +4,7 @@ from sqlalchemy import Float
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
 from sqlalchemy import Boolean
 from typing import Optional
+from sqlalchemy import inspect
 
 engine = create_engine(
     "sqlite:///product_catalog.db",
@@ -91,3 +92,8 @@ with Session(engine) as session:
 
     for product in products:
         print(f"  {product}")
+
+inspector = inspect(engine)
+print("Tables:", inspector.get_table_names())
+for column in inspector.get_columns("products"):
+    print(f"  {column['name']}: {column['type']} (nullable={column['nullable']})")
