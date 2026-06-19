@@ -1,0 +1,55 @@
+Learning Objectives
+-----------------------------------
+By the end of this lesson, you will be able to:
+
+    Perform all four CRUD operations using SQLAlchemy's session
+    Query data with filters, sorting, and limits using SQLAlchemy's query API
+    Update and delete records through Python objects
+    Handle common session patterns (add, commit, rollback)
+
+In the SQL Fundamentals lesson, you learned the four operations every application performs: Create, Read, Update, Delete. You wrote those as raw SQL strings. Now you'll do the same things through Python objects and SQLAlchemy's session.
+
+The mental model shift: instead of "insert a row into the users table," you think "create a User object and save it." Instead of "write a SELECT with WHERE," you think "ask the session for User objects that match a condition."
+
+The SQL still runs under the hood. But your code reads like Python, not embedded SQL.
+
+The Session Lifecycle
+-----------------------------------
+Every database interaction goes through the session:
+
+    Open a session
+    Do things — create, query, modify, delete objects
+    Commit — save all pending changes to the database
+    Close the session (or use a with block that handles this automatically)
+
+If something goes wrong, you can rollback — undo everything since the last commit.
+with Session(engine) as session:
+    try:
+        # Operations here...
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+
+The CRUD Mapping
+-----------------------------------
+Create → Make a Python object, session.add(), session.commit()
+
+Read → session.query(Model) with .all(), .first(), .filter_by(), or session.get(Model, id)
+
+Update → Change the object's attributes, session.commit() (SQLAlchemy detects the changes automatically)
+
+Delete → session.delete(object), session.commit()
+
+The elegance is in the Update: you don't write UPDATE statements. You change a Python attribute, and SQLAlchemy generates the SQL.
+
+Key Patterns
+
+    session.get(Model, id) — Fetch by primary key (returns None if not found)
+    session.query(Model).all() — Get all rows
+    session.query(Model).filter_by(column=value) — Filter with keyword arguments
+    session.query(Model).filter(Model.column == value) — Filter with expressions (more flexible)
+    session.add(object) / session.add_all([objects]) — Stage for insert
+    session.delete(object) — Stage for deletion
+    session.commit() — Save pending changes
+    session.rollback() — Undo pending changes
