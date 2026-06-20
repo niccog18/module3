@@ -1,0 +1,100 @@
+Learning Objectives
+
+By the end of this lesson, you will be able to:
+
+    Define one-to-many relationships between SQLAlchemy models using ForeignKey and relationship()
+    Define many-to-many relationships using association tables
+    Navigate relationships in both directions using back_populates
+    Create and query related data through Python objects
+
+In the Joins lesson, you connected tables using SQL — writing JOIN customers ON orders.customer_id = customers.id. That works, but it requires you to think in terms of foreign keys and IDs every time you want to access related data.
+
+SQLAlchemy's relationship system lets you do something much more intuitive: access related objects as Python attributes.
+
+Instead of:
+# Raw SQL thinking
+cursor.execute("SELECT * FROM posts WHERE author_id = ?", (author.id,))
+
+You write:
+# SQLAlchemy relationship thinking
+author.posts  # Returns a list of Post objects — that's it
+
+Behind the scenes, SQLAlchemy runs the same JOIN or SELECT query. But your code reads like "give me this author's posts," which is exactly how you think about the data.
+One-to-Many Relationships
+
+The most common relationship type. One record in Table A relates to many records in Table B:
+
+    One author has many posts
+    One department has many employees
+    One customer has many orders
+
+In the database, this is implemented with a foreign key on the "many" side. Each post has an author_id pointing to the author who wrote it.
+
+In SQLAlchemy, you define both the foreign key column AND a relationship attribute:
+class Author(Base):
+    __tablename__ = "authors"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(nullable=False)
+    
+    # Relationship: "this author has many posts"
+    posts: Mapped[list["Post"]] = relationship(back_populates="author")
+
+class Post(Base):
+    __tablename__ = "posts"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(nullable=False)
+    
+    # Foreign key: points to the authors table
+    author_id: Mapped[int] = mapped_column(ForeignKey("authors.id"))
+    
+    # Relationship: "this post belongs to one author"
+    author: Mapped["Author"] = relationship(back_populates="posts")
+
+Key details:
+
+    ForeignKey("authors.id") — The actual database column that stores the relationship (an integer matching the author's id)
+    relationship(back_populates="...") — The Python-side navigation. Not a database column — it's a virtual attribute that SQLAlchemy populates for you
+    Mapped[list["Post"]] — On the "one" side, the type is a list (one author → many posts)
+    Mapped["Author"] — On the "many" side, the type is a single object (one post → one author)
+    back_populates connects the two sides so changes to one are reflected in the other
+
+Many-to-Many Relationships
+
+Some relationships are many-to-many: a student can enroll in many courses, and a course can have many students. Neither side "owns" the relationship.
+
+In the database, this requires an association table (also called a junction table) — a third table that holds pairs of foreign keys:
+enrollments
+-----------
+student_id  →  students.id
+course_id   →  courses.id
+
+In SQLAlchemy:
+from sqlalchemy import Table, Column, Integer, ForeignKey
+
+# Association table — not a model, just a table definition
+enrollment_table = Table(
+    "enrollments",
+    Base.metadata,
+    Column("student_id", Integer, ForeignKey("students.id")),
+    Column("course_id", Integer, ForeignKey("courses.id")),
+)
+
+class Student(Base):
+    __tablename__ = "students"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(nullable=False)
+    
+    courses: Mapped[list["Course"]] = relationship(
+        secondary=enrollment_table, back_populates="students"
+    )
+
+class Course(Base):
+    __tablename__ = "courses"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(nullable=False)
+    
+    students: Mapped[list["Student"]] = relationship(
+        secondary=enrollment_table, back_populates="courses"
+    )
+
+The secondary=enrollment_table parameter tells SQLAlchemy to use the association table to connect the two models. Now student.courses gives you a list of courses, and course.students gives you a list of students.
