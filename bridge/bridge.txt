@@ -1,0 +1,70 @@
+Learning Objectives
+-----------------------------------
+By the end of this lesson, you will be able to:
+
+    Explain the similarities and differences between pandas DataFrames and SQL tables
+    Translate common pandas operations into SQL equivalents (and vice versa)
+    Use pandas' read_sql() to pull database data directly into a DataFrame
+    Decide when to use pandas vs. SQL for a given data task
+
+In Module 2, you became comfortable with pandas: loading CSVs, filtering with boolean masks, grouping with groupby(), and sorting with sort_values(). Now you've learned SQL: filtering with WHERE, grouping with GROUP BY, sorting with ORDER BY.
+
+You might be wondering: why do I need both? They seem to do the same things.
+
+They do overlap — and that's exactly the point of this lesson. Understanding the parallels helps you choose the right tool for the job and makes both skills stronger. When you see a SQL query, you'll think "oh, that's like a pandas filter." When you need to wrangle data in pandas, you might realize the problem would be easier to solve with a SQL query first.
+
+Here's the quick translation table:
+
+pandas
+	1.df[['name', 'price']]
+    2.df[df['price'] > 20]
+    3.df.sort_values('price')
+    4.df.head(10)
+    5.df.groupby('category').mean()
+    6.df.merge(other_df, on='key')
+    7.df['price'].sum()
+    8.len(df) or df.shape[0]
+SQL
+	1.SELECT name, price FROM products
+    2.WHERE price > 20
+    3.ORDER BY price
+    4.LIMIT 10
+    5.GROUP BY category or AVG()
+    6.JOIN...ON
+    7.SUM(price)
+    8.COUNT(*)
+What It Does
+    1.Pick specific columns
+    2.Filter rows
+    3.Sort rows
+    4.Limit results
+    5.Group and aggregate
+    6.Combine tables
+    7.Aggregate function
+    8.Count rows
+
+
+When to Use Which
+-----------------------------------
+Use SQL when:
+
+    Your data is already in a database
+    You need to filter a huge dataset down to a manageable size before loading it into Python
+    You need to join multiple tables
+    Multiple applications or users need to query the same data
+    You need the data to persist reliably
+
+Use pandas when:
+
+    You're doing exploratory analysis on a CSV or downloaded dataset
+    You need complex transformations (reshaping, pivoting, custom functions)
+    You're preparing data for visualization
+    You're doing one-off analysis that doesn't need to be saved to a database
+    You want to prototype quickly before writing the SQL version
+
+Use both together when:
+
+    You query the database with SQL to get the data you need (filtered, joined, aggregated)
+    Then load the results into a pandas DataFrame for further analysis or visualization
+
+That "both together" approach is extremely common in professional data work. SQL handles the heavy lifting in the database, and pandas handles the in-memory analysis and visualization.
